@@ -5,6 +5,7 @@ services:
       POSTGRES_USER: todo_user
       POSTGRES_PASSWORD: todo_pass
       POSTGRES_DB: todo_db
+      TZ: America/Caracas
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
@@ -16,6 +17,7 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql://todo_user:todo_pass@db:5432/todo_db
+      TZ: America/Caracas
     depends_on:
       - db
 

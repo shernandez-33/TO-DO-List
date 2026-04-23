@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/task.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 
 class TaskFormScreen extends StatefulWidget {
   final ApiService api;
@@ -41,10 +42,15 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
       if (_dueDate != null) 'due_date': _dueDate!.toIso8601String().split('T').first,
       if (_reminderAt != null) 'reminder_at': _reminderAt!.toIso8601String(),
     };
+    late Task saved;
     if (widget.task != null) {
-      await widget.api.updateTask(widget.task!.taskId, data);
+      saved = await widget.api.updateTask(widget.task!.taskId, data);
+      await cancelReminder(widget.task!.taskId);
     } else {
-      await widget.api.createTask({...data, 'user_id': widget.userId});
+      saved = await widget.api.createTask({...data, 'user_id': widget.userId});
+    }
+    if (_reminderAt != null) {
+      await scheduleReminder(saved.taskId, saved.taskName, _reminderAt!);
     }
     if (mounted) Navigator.pop(context);
   }

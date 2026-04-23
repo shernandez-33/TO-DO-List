@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/task.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 import 'task_form_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -38,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _deleteTask(int id) async {
     await api.deleteTask(id);
+    await cancelReminder(id);
     _loadTasks();
   }
 

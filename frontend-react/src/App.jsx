@@ -3,6 +3,7 @@ import { api } from './api'
 import TaskList from './components/TaskList'
 import TaskForm from './components/TaskForm'
 import UserSelector from './components/UserSelector'
+import { useNotifications } from './useNotifications'
 import './index.css'
 
 export default function App() {
@@ -23,6 +24,8 @@ export default function App() {
   }, [currentUser])
 
   const refresh = () => api.getTasks(currentUser?.id).then(setTasks)
+
+  useNotifications(tasks)
 
   const handleSave = async (data) => {
     if (editingTask) {

@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
+import 'services/notification_service.dart';
 
-void main() => runApp(const TodoApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initNotifications();
+  runApp(const TodoApp());
+}
 
 class TodoApp extends StatelessWidget {
   const TodoApp({super.key});

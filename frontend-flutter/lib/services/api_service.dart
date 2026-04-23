@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/task.dart';
 
-const String baseUrl = 'http://10.0.2.2:8000'; // Android emulator → localhost
+const String baseUrl = 'http://192.168.100.231:8000';
 
 class ApiService {
   Future<List<User>> getUsers() async {
