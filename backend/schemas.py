@@ -1,6 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_serializer
 from typing import Optional
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from models import StatusEnum, PriorityEnum
 
 class UserCreate(BaseModel):
@@ -39,3 +39,11 @@ class TaskOut(BaseModel):
     reminder_at: Optional[datetime]
     created_at: datetime
     model_config = {"from_attributes": True}
+
+    @field_serializer('reminder_at', 'created_at')
+    def serialize_dt(self, dt: Optional[datetime]) -> Optional[str]:
+        if dt is None:
+            return None
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')

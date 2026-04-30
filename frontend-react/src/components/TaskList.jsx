@@ -1,4 +1,5 @@
 import React from 'react'
+import { toDisplayText, toDisplayDate } from '../dateUtils'
 
 const priorityLabel = { low: '🟢 Baja', medium: '🟡 Media', high: '🔴 Alta' }
 
@@ -12,8 +13,8 @@ export default function TaskList({ tasks, onEdit, onDelete, onComplete }) {
           <div className="task-info">
             <span className="task-name">{t.task_name}</span>
             <span className="task-meta">{priorityLabel[t.priority]} · {t.status === 'completed' ? '✅ Completada' : '⏳ Pendiente'}</span>
-            {t.due_date && <span className="task-meta">📅 {t.due_date}</span>}
-            {t.reminder_at && <span className="task-meta">🔔 {t.reminder_at.slice(0, 16).replace('T', ' ')}</span>}
+            {t.due_date && <span className="task-meta">📅 {toDisplayDate(t.due_date)}</span>}
+            {t.reminder_at && <span className="task-meta">🔔 {toDisplayText(t.reminder_at)}</span>}
           </div>
           <div className="task-actions">
             {t.status !== 'completed' && <button onClick={() => onComplete(t)}>✔</button>}

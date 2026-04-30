@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { toInputValue, toISOWithOffset } from '../dateUtils'
 
 const empty = { task_name: '', priority: 'medium', status: 'pending', due_date: '', reminder_at: '' }
 
@@ -11,7 +12,7 @@ export default function TaskForm({ task, onSave, onCancel }) {
       priority: task.priority,
       status: task.status,
       due_date: task.due_date || '',
-      reminder_at: task.reminder_at ? task.reminder_at.slice(0, 16) : ''
+      reminder_at: toInputValue(task.reminder_at)
     } : empty)
   }, [task])
 
@@ -22,7 +23,11 @@ export default function TaskForm({ task, onSave, onCancel }) {
     if (!form.task_name.trim()) return
     const data = { ...form }
     if (!data.due_date) delete data.due_date
-    if (!data.reminder_at) delete data.reminder_at
+    if (data.reminder_at) {
+      data.reminder_at = toISOWithOffset(data.reminder_at)
+    } else {
+      delete data.reminder_at
+    }
     onSave(data)
     setForm(empty)
   }

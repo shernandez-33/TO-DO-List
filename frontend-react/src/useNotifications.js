@@ -1,27 +1,43 @@
 import { useEffect, useRef } from 'react'
 
+const WINDOW_MS = 60000        // dispara si faltan <= 60 segundos
+const INTERVAL_MS = 30000      // chequea cada 30 segundos
+
+// Persiste IDs ya notificados en sessionStorage para sobrevivir re-renders
+const getNotified = () => new Set(JSON.parse(sessionStorage.getItem('notified') || '[]'))
+const saveNotified = (set) => sessionStorage.setItem('notified', JSON.stringify([...set]))
+
 export function useNotifications(tasks) {
-  const notified = useRef(new Set())
+  const tasksRef = useRef(tasks)
+
+  // Mantiene tasksRef actualizado sin reiniciar el intervalo
+  useEffect(() => { tasksRef.current = tasks }, [tasks])
 
   useEffect(() => {
     if (Notification.permission === 'default') Notification.requestPermission()
-  }, [])
 
-  useEffect(() => {
     const check = () => {
       if (Notification.permission !== 'granted') return
       const now = new Date()
-      tasks.forEach(t => {
-        if (!t.reminder_at || notified.current.has(t.task_id)) return
+      const notified = getNotified()
+
+      tasksRef.current.forEach(t => {
+        if (!t.reminder_at || notified.has(t.task_id) || t.status === 'completed') return
         const diff = new Date(t.reminder_at) - now
-        if (diff >= 0 && diff <= 60000) {
-          new Notification(`🔔 Recordatorio: ${t.task_name}`)
-          notified.current.add(t.task_id)
+        if (diff <= WINDOW_MS) {  // ya pasó o falta <= 1 min
+          new Notification(`🔔 Recordatorio: ${t.task_name}`, {
+            body: diff > 0
+              ? `En ${Math.ceil(diff / 60000)} min`
+              : 'Ahora'
+          })
+          notified.add(t.task_id)
+          saveNotified(notified)
         }
       })
     }
+
     check()
-    const id = setInterval(check, 60000)
+    const id = setInterval(check, INTERVAL_MS)
     return () => clearInterval(id)
-  }, [tasks])
+  }, []) // solo monta/desmonta una vez
 }

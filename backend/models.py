@@ -5,13 +5,13 @@ from sqlalchemy.sql import func
 from database import Base
 
 class StatusEnum(str, enum.Enum):
-    pending = "pendiente"
-    completed = "completada"
+    pending = "pending"
+    completed = "completed"
 
 class PriorityEnum(str, enum.Enum):
-    low = "baja"
-    medium = "media"
-    high = "alta"
+    low = "low"
+    medium = "medium"
+    high = "high"
 
 class User(Base):
     __tablename__ = "users"
