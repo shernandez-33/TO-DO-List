@@ -1,8 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../models/task.dart';
 import '../services/api_service.dart';
 import '../services/notification_service.dart';
+import '../utils/date_utils.dart';
 import 'task_form_screen.dart';
+
+final FlutterLocalNotificationsPlugin flnp = FlutterLocalNotificationsPlugin();
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,11 +20,48 @@ class _HomeScreenState extends State<HomeScreen> {
   List<User> users = [];
   User? currentUser;
   List<Task> tasks = [];
+  Timer? _refreshTimer;
+  bool _isRefreshing = false;
 
   @override
   void initState() {
     super.initState();
     _loadUsers();
+    _startAutoRefresh();
+    _setupNotificationListener();
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startAutoRefresh() {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (currentUser != null) {
+        _loadTasks();
+      }
+    });
+  }
+
+  void _setupNotificationListener() {
+    // Escuchar notificaciones mientras la app está en primer plano
+    flnp.initialize(
+      const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        iOS: DarwinInitializationSettings(),
+      ),
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        // Cuando el usuario toca una notificación
+        if (response.payload != null) {
+          // Podríamos navegar a una tarea específica aquí
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Notificación: ${response.payload}')),
+          );
+        }
+      },
+    );
   }
 
   Future<void> _loadUsers() async {
@@ -33,8 +75,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadTasks() async {
     if (currentUser == null) return;
+    setState(() => _isRefreshing = true);
     final data = await api.getTasks(currentUser!.id);
-    setState(() => tasks = data);
+    setState(() {
+      tasks = data;
+      _isRefreshing = false;
+    });
   }
 
   Future<void> _deleteTask(int id) async {
@@ -78,7 +124,15 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('📝 Todo List'),
+        title: Row(
+          children: [
+            const Text('📝 Todo List'),
+            if (_isRefreshing) ...[
+              const SizedBox(width: 8),
+              const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+            ],
+          ],
+        ),
         actions: [
           if (users.isNotEmpty)
             DropdownButton<int>(
@@ -91,6 +145,11 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
           IconButton(icon: const Icon(Icons.person_add), onPressed: _addUser),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: currentUser != null ? _loadTasks : null,
+            tooltip: 'Refrescar tareas',
+          ),
         ],
       ),
       body: tasks.isEmpty
@@ -107,7 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: Text(t.taskName, style: TextStyle(
                     decoration: t.status == 'completed' ? TextDecoration.lineThrough : null,
                   )),
-                  subtitle: Text('${_priorityLabel(t.priority)}${t.dueDate != null ? ' · 📅 ${t.dueDate}' : ''}'),
+                  subtitle: Text('${getPriorityLabel(t.priority)} · ${getStatusLabel(t.status)}${t.dueDate != null ? ' · 📅 ${formatDueDate(t.dueDate!)}' : ''}${t.reminderAt != null ? ' · 🔔 ${formatReminder(t.reminderAt!)}' : ''}'),
                   trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                     if (t.status != 'completed')
                       IconButton(icon: const Icon(Icons.check, color: Colors.green), onPressed: () => _completeTask(t)),
@@ -132,5 +191,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  String _priorityLabel(String p) => {'low': '🟢 Baja', 'medium': '🟡 Media', 'high': '🔴 Alta'}[p] ?? p;
 }

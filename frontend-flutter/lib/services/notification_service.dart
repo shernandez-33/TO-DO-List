@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
@@ -13,6 +14,12 @@ Future<void> initNotifications() async {
 }
 
 Future<void> scheduleReminder(int taskId, String taskName, DateTime reminderAt) async {
+  // Solo programar notificaciones en plataformas móviles
+  if (!Platform.isAndroid && !Platform.isIOS) {
+    print('Notificaciones locales no soportadas en esta plataforma');
+    return;
+  }
+  
   final scheduled = tz.TZDateTime.from(reminderAt, tz.local);
   if (scheduled.isBefore(tz.TZDateTime.now(tz.local))) return;
 
@@ -32,5 +39,7 @@ Future<void> scheduleReminder(int taskId, String taskName, DateTime reminderAt) 
 }
 
 Future<void> cancelReminder(int taskId) async {
+  // Solo cancelar en plataformas móviles
+  if (!Platform.isAndroid && !Platform.isIOS) return;
   await flnp.cancel(taskId);
 }
