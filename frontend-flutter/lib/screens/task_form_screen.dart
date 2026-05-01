@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/task.dart';
 import '../services/api_service.dart';
@@ -158,6 +159,16 @@ class _TaskFormScreenState extends State<TaskFormScreen> {
                   context: currentContext,
                   initialTime: TimeOfDay.now(),
                   initialEntryMode: TimePickerEntryMode.dial,
+                  builder: Platform.isLinux || Platform.isWindows || Platform.isMacOS
+                      ? (context, child) {
+                          return MediaQuery(
+                            data: MediaQuery.of(context).copyWith(
+                              alwaysUse24HourFormat: false,
+                            ),
+                            child: child!,
+                          );
+                        }
+                      : null,
                 );
                 if (time != null) {
                   setState(() {
